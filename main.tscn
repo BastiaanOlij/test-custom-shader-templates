@@ -1,0 +1,91 @@
+[gd_scene load_steps=12 format=3 uid="uid://b44bcuru2t7dw"]
+
+[ext_resource type="Texture2D" uid="uid://b1waowk6l76ap" path="res://assets/images/pattern.png" id="1_falxy"]
+[ext_resource type="ShaderTemplate" path="res://test.gdtemplate" id="2_eml0t"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_2nj7l"]
+sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+ground_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+
+[sub_resource type="Sky" id="Sky_1cj0o"]
+sky_material = SubResource("ProceduralSkyMaterial_2nj7l")
+
+[sub_resource type="Environment" id="Environment_ax5rq"]
+background_mode = 2
+sky = SubResource("Sky_1cj0o")
+tonemap_mode = 2
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fmdho"]
+albedo_color = Color(0, 0.544, 0.0953229, 1)
+albedo_texture = ExtResource("1_falxy")
+uv1_scale = Vector3(50, 50, 50)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_1f742"]
+size = Vector2(1000, 1000)
+subdivide_width = 15
+subdivide_depth = 15
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_x030u"]
+albedo_color = Color(0.181894, 0.403872, 0.628806, 1)
+albedo_texture = ExtResource("1_falxy")
+uv1_scale = Vector3(3, 2, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_66f6a"]
+
+[sub_resource type="Shader" id="Shader_0ofo7"]
+code = "// NOTE: Shader automatically converted from Godot Engine 4.3.beta's StandardMaterial3D.
+
+shader_type spatial;
+shader_template \"res://test.gdtemplate\";
+render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_burley, specular_schlick_ggx;
+
+uniform vec4 albedo : source_color;
+uniform sampler2D texture_albedo : source_color, filter_linear_mipmap, repeat_enable;
+
+uniform vec3 uv1_scale;
+uniform vec3 uv1_offset;
+
+void vertex() {
+	UV = UV * uv1_scale.xy + uv1_offset.xy;
+}
+
+void fragment() {
+	vec4 albedo_tex = texture(texture_albedo, UV);
+	ALBEDO = albedo.rgb * albedo_tex.rgb;
+}
+"
+shader_template = ExtResource("2_eml0t")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_15xma"]
+render_priority = 0
+shader = SubResource("Shader_0ofo7")
+shader_parameter/albedo = Color(0.181894, 0.403872, 0.628806, 1)
+shader_parameter/uv1_scale = Vector3(3, 2, 1)
+shader_parameter/uv1_offset = Vector3(0, 0, 0)
+shader_parameter/texture_albedo = ExtResource("1_falxy")
+
+[node name="Main" type="Node3D"]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 0, 7, 0)
+shadow_enabled = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_ax5rq")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(0.886632, -0.0741723, 0.45649, 0, 0.987055, 0.160381, -0.462476, -0.142199, 0.875154, 2.27761, 1.59337, 2.64574)
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+material_override = SubResource("StandardMaterial3D_fmdho")
+mesh = SubResource("PlaneMesh_1f742")
+
+[node name="Cube01" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.806028, 0)
+material_override = SubResource("StandardMaterial3D_x030u")
+mesh = SubResource("BoxMesh_66f6a")
+
+[node name="Cube02" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.52407, 0.806028, 0)
+material_override = SubResource("ShaderMaterial_15xma")
+mesh = SubResource("BoxMesh_66f6a")

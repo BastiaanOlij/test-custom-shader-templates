@@ -1,0 +1,308 @@
+// Minimal example Forward+ renderer custom shader template
+shader_type spatial;
+
+#[vertex]
+
+#version 450
+
+#VERSION_DEFINES
+
+#define SHADER_IS_SRGB false
+
+#include "standard_includes.glsl"
+#include "input_attributes.glsl"
+
+#GLOBALS
+
+// Outputs to fragment shader
+
+layout(location = 0) out vec3 vertex_interp;
+
+#ifdef NORMAL_USED
+layout(location = 1) out vec3 normal_interp;
+#endif
+
+#ifdef UV_USED
+layout(location = 2) out vec2 uv_interp;
+#endif
+
+#ifdef TANGENT_USED
+layout(location = 3) out vec3 tangent_interp;
+layout(location = 4) out vec3 binormal_interp;
+#endif
+
+layout(location = 5) out flat uint instance_index_interp;
+
+invariant gl_Position;
+
+#define global_time scene_data_block.data.time
+
+void main() {
+    SceneData scene_data = scene_data_block.data;
+
+    // This example only implements a tiny subset needed for all Godots features to work.
+    // See scene_forward_clustered.glsl in Godots source for a full implementation.
+
+    // Get instance information
+	uint instance_index = draw_call.instance_index;
+
+	bool is_multimesh = bool(instances.data[instance_index].flags & INSTANCE_FLAGS_MULTIMESH);
+	if (!is_multimesh) {
+		instance_index += gl_InstanceIndex;
+	}
+
+	instance_index_interp = instance_index;
+
+    // Prepare our matrices
+	mat4 model_matrix = instances.data[instance_index].transform;
+	mat3 model_normal_matrix;
+	if (bool(instances.data[instance_index].flags & INSTANCE_FLAGS_NON_UNIFORM_SCALE)) {
+		model_normal_matrix = transpose(inverse(mat3(model_matrix)));
+	} else {
+		model_normal_matrix = mat3(model_matrix);
+	}
+
+    mat4 read_model_matrix = model_matrix;
+	mat4 inv_view_matrix = scene_data.inv_view_matrix;
+	mat4 modelview = scene_data.view_matrix * model_matrix;
+	mat3 modelview_normal = mat3(scene_data.view_matrix) * model_normal_matrix;
+	mat4 read_view_matrix = scene_data.view_matrix;
+	vec2 read_viewport_size = scene_data.viewport_size;
+
+#ifdef USE_MULTIVIEW
+	mat4 projection_matrix = scene_data.projection_matrix_view[ViewIndex];
+	mat4 inv_projection_matrix = scene_data.inv_projection_matrix_view[ViewIndex];
+	vec3 eye_offset = scene_data.eye_offset[ViewIndex].xyz;
+#else
+	mat4 projection_matrix = scene_data.projection_matrix;
+	mat4 inv_projection_matrix = scene_data.inv_projection_matrix;
+	vec3 eye_offset = vec3(0.0, 0.0, 0.0);
+#endif //USE_MULTIVIEW
+
+    // Prepare our vertex inputs
+	vec3 vertex;
+#ifdef NORMAL_USED
+	vec3 normal;
+#endif
+#if defined(NORMAL_USED) || defined(TANGENT_USED)
+	vec3 tangent;
+	vec3 binormal;
+#endif
+#ifdef UV_USED
+	uv_interp = uv_attrib;
+#endif
+
+    // Unpack vertex attributes
+	_unpack_vertex_attributes(
+			vertex_angle_attrib,
+			instances.data[instance_index].compressed_aabb_position_pad.xyz,
+			instances.data[instance_index].compressed_aabb_size_pad.xyz,
+#if defined(NORMAL_USED) || defined(TANGENT_USED)
+			axis_tangent_attrib,
+#ifdef NORMAL_USED
+			normal,
+#endif // NORMAL_USED
+			tangent,
+			binormal,
+#endif
+			vertex);
+
+	vec4 uv_scale = instances.data[instance_index].uv_scale;
+
+	if (uv_scale != vec4(0.0)) { // Compression enabled
+#ifdef UV_USED
+		uv_interp = (uv_interp - 0.5) * uv_scale.xy;
+#endif
+	}
+
+    // Output
+
+#ifdef OVERRIDE_POSITION
+	vec4 position;
+#endif
+
+    // Run user code
+	{
+#CODE : VERTEX
+	}
+
+    // And output...
+
+	vertex_interp = (modelview * vec4(vertex, 1.0)).xyz;
+#ifdef NORMAL_USED
+	normal_interp = modelview_normal * normal;
+#endif
+#ifdef TANGENT_USED
+	tangent_interp = modelview_normal * binormal;
+	binormal_interp = modelview_normal * tangent;
+#endif
+
+#ifdef OVERRIDE_POSITION
+	gl_Position = position;
+#else
+	gl_Position = projection_matrix * vec4(vertex_interp, 1.0);
+#endif
+
+}
+
+#[fragment]
+
+#version 450
+
+#VERSION_DEFINES
+
+#define SHADER_IS_SRGB false
+
+#include "standard_includes.glsl"
+#include "specialization_constants.glsl"
+#include "output_attributes.glsl"
+
+#GLOBALS
+
+// Inputs from vertex shader
+layout(location = 0) in vec3 vertex_interp;
+
+#ifdef NORMAL_USED
+layout(location = 1) in vec3 normal_interp;
+#endif
+
+#ifdef UV_USED
+layout(location = 2) in vec2 uv_interp;
+#endif
+
+#ifdef TANGENT_USED
+layout(location = 3) in vec3 tangent_interp;
+layout(location = 4) in vec3 binormal_interp;
+#endif
+
+layout(location = 5) in flat uint instance_index_interp;
+
+#define global_time scene_data_block.data.time
+
+void main() {
+    SceneData scene_data = scene_data_block.data;
+
+    // This example only implements a tiny subset needed for all Godots features to work.
+    // See scene_forward_clustered.glsl in Godots source for a full implementation.
+
+	uint instance_index = instance_index_interp;
+
+    // Get vertex info
+	vec3 vertex = vertex_interp;
+#ifdef USE_MULTIVIEW
+	vec3 eye_offset = scene_data.eye_offset[ViewIndex].xyz;
+	vec3 view = -normalize(vertex_interp - eye_offset);
+#else
+	vec3 eye_offset = vec3(0.0, 0.0, 0.0);
+	vec3 view = -normalize(vertex_interp);
+#endif
+
+#ifdef NORMAL_USED
+	vec3 normal = normalize(normal_interp);
+
+#if defined(DO_SIDE_CHECK)
+	if (!gl_FrontFacing) {
+		normal = -normal;
+	}
+#endif
+
+#endif //NORMAL_USED
+
+#ifdef TANGENT_USED
+	vec3 binormal = normalize(binormal_interp);
+	vec3 tangent = normalize(tangent_interp);
+#else
+	vec3 binormal = vec3(0.0);
+	vec3 tangent = vec3(0.0);
+#endif
+
+#ifdef UV_USED
+	vec2 uv = uv_interp;
+#endif
+
+    // Prepare our outputs
+	vec3 albedo = vec3(1.0);
+	vec3 emission = vec3(0.0);
+    float alpha = 1.0;
+
+#if defined(NORMAL_MAP_USED)
+
+	vec3 normal_map = vec3(0.5);
+#endif
+
+	float normal_map_depth = 1.0;
+
+    // User fragment code
+	{
+#CODE : FRAGMENT
+	}
+
+    // Do lighting
+#if !defined(MODE_RENDER_DEPTH) && !defined(MODE_UNSHADED)
+
+#ifdef NORMAL_MAP_USED
+
+	normal_map.xy = normal_map.xy * 2.0 - 1.0;
+	normal_map.z = sqrt(max(0.0, 1.0 - dot(normal_map.xy, normal_map.xy))); //always ignore Z, as it can be RG packed, Z may be pos/neg, etc.
+
+	normal = normalize(mix(normal, tangent * normal_map.x + binormal * normal_map.y + normal * normal_map.z, normal_map_depth));
+
+#endif
+
+    // No lighting code here (yet), but we do need to include user code
+#if false
+	{
+#CODE : LIGHT
+	}
+#endif
+
+#endif // !defined(MODE_RENDER_DEPTH) && !defined(MODE_UNSHADED)
+
+#ifdef ALPHA_SCISSOR_USED
+	if (alpha < alpha_scissor_threshold) {
+		discard;
+	}
+#endif // ALPHA_SCISSOR_USED
+
+#ifdef MODE_RENDER_DEPTH
+#if defined(USE_OPAQUE_PREPASS) || defined(ALPHA_ANTIALIASING_EDGE_USED)
+	if (alpha < scene_data.opaque_prepass_threshold) {
+		discard;
+	}
+#endif // USE_OPAQUE_PREPASS || ALPHA_ANTIALIASING_EDGE_USED
+#endif // MODE_RENDER_DEPTH
+
+    // And output
+#ifdef MODE_RENDER_DEPTH
+
+#ifdef MODE_RENDER_MATERIAL
+
+    albedo_output_buffer.rgb = vec4(albedo. alpha);
+    normal_output_buffer = normal * 0.5 + 0.5;
+    orm_output_buffer = vec4(0.0); // ao, roughness, metallic, sss_strength
+    emission_output_buffer.rgb = vev4(emission, 0.0);
+    depth_output_buffer.r = -vertex.z;
+
+#endif // MODE_RENDER_MATERIAL
+
+#ifdef MODE_RENDER_NORMAL_ROUGHNESS
+    normal_roughness_output_buffer = vec4(normal * 0.5 + 0.5, 0.0);
+
+#ifdef MODE_RENDER_VOXEL_GI
+    voxel_gi_buffer = uvec2(0.0);
+#endif
+
+#endif // MODE_RENDER_NORMAL_ROUGHNESS
+#else // RENDER DEPTH
+
+#ifdef MODE_SEPARATE_SPECULAR
+
+    diffuse_buffer = vec4(albedo, 0.0);
+    specular_buffer = vec4(0.0);
+#else
+
+    frag_color = vec4(albedo, alpha);
+#endif // MODE_SEPARATE_SPECULAR
+
+#endif // RENDER DEPTH
+}
