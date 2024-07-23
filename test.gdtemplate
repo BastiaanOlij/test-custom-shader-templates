@@ -38,12 +38,12 @@ invariant gl_Position;
 #define global_time scene_data_block.data.time
 
 void main() {
-    SceneData scene_data = scene_data_block.data;
+	SceneData scene_data = scene_data_block.data;
 
-    // This example only implements a tiny subset needed for all Godots features to work.
-    // See scene_forward_clustered.glsl in Godots source for a full implementation.
+	// This example only implements a tiny subset needed for all Godots features to work.
+	// See scene_forward_clustered.glsl in Godots source for a full implementation.
 
-    // Get instance information
+	// Get instance information
 	uint instance_index = draw_call.instance_index;
 
 	bool is_multimesh = bool(instances.data[instance_index].flags & INSTANCE_FLAGS_MULTIMESH);
@@ -53,7 +53,7 @@ void main() {
 
 	instance_index_interp = instance_index;
 
-    // Prepare our matrices
+	// Prepare our matrices
 	mat4 model_matrix = instances.data[instance_index].transform;
 	mat3 model_normal_matrix;
 	if (bool(instances.data[instance_index].flags & INSTANCE_FLAGS_NON_UNIFORM_SCALE)) {
@@ -62,7 +62,7 @@ void main() {
 		model_normal_matrix = mat3(model_matrix);
 	}
 
-    mat4 read_model_matrix = model_matrix;
+	mat4 read_model_matrix = model_matrix;
 	mat4 inv_view_matrix = scene_data.inv_view_matrix;
 	mat4 modelview = scene_data.view_matrix * model_matrix;
 	mat3 modelview_normal = mat3(scene_data.view_matrix) * model_normal_matrix;
@@ -79,7 +79,7 @@ void main() {
 	vec3 eye_offset = vec3(0.0, 0.0, 0.0);
 #endif //USE_MULTIVIEW
 
-    // Prepare our vertex inputs
+	// Prepare our vertex inputs
 	vec3 vertex;
 #ifdef NORMAL_USED
 	vec3 normal;
@@ -92,7 +92,7 @@ void main() {
 	uv_interp = uv_attrib;
 #endif
 
-    // Unpack vertex attributes
+	// Unpack vertex attributes
 	_unpack_vertex_attributes(
 			vertex_angle_attrib,
 			instances.data[instance_index].compressed_aabb_position_pad.xyz,
@@ -115,18 +115,18 @@ void main() {
 #endif
 	}
 
-    // Output
+	// Output
 
 #ifdef OVERRIDE_POSITION
 	vec4 position;
 #endif
 
-    // Run user code
+	// Run user code
 	{
 #CODE : VERTEX
 	}
 
-    // And output...
+	// And output...
 
 	vertex_interp = (modelview * vec4(vertex, 1.0)).xyz;
 #ifdef NORMAL_USED
@@ -155,7 +155,7 @@ void main() {
 
 #include "standard_includes.glsl"
 #include "specialization_constants.glsl"
-#include "output_attributes.glsl"
+#include "output_buffers.glsl"
 
 #GLOBALS
 
@@ -180,14 +180,14 @@ layout(location = 5) in flat uint instance_index_interp;
 #define global_time scene_data_block.data.time
 
 void main() {
-    SceneData scene_data = scene_data_block.data;
+	SceneData scene_data = scene_data_block.data;
 
-    // This example only implements a tiny subset needed for all Godots features to work.
-    // See scene_forward_clustered.glsl in Godots source for a full implementation.
+	// This example only implements a tiny subset needed for all Godots features to work.
+	// See scene_forward_clustered.glsl in Godots source for a full implementation.
 
 	uint instance_index = instance_index_interp;
 
-    // Get vertex info
+	// Get vertex info
 	vec3 vertex = vertex_interp;
 #ifdef USE_MULTIVIEW
 	vec3 eye_offset = scene_data.eye_offset[ViewIndex].xyz;
@@ -220,10 +220,10 @@ void main() {
 	vec2 uv = uv_interp;
 #endif
 
-    // Prepare our outputs
+	// Prepare our outputs
 	vec3 albedo = vec3(1.0);
 	vec3 emission = vec3(0.0);
-    float alpha = 1.0;
+	float alpha = 1.0;
 
 #if defined(NORMAL_MAP_USED)
 
@@ -232,12 +232,12 @@ void main() {
 
 	float normal_map_depth = 1.0;
 
-    // User fragment code
+	// User fragment code
 	{
 #CODE : FRAGMENT
 	}
 
-    // Do lighting
+	// Do lighting
 #if !defined(MODE_RENDER_DEPTH) && !defined(MODE_UNSHADED)
 
 #ifdef NORMAL_MAP_USED
@@ -249,7 +249,7 @@ void main() {
 
 #endif
 
-    // No lighting code here (yet), but we do need to include user code
+	// No lighting code here (yet), but we do need to include user code
 #if false
 	{
 #CODE : LIGHT
@@ -272,24 +272,24 @@ void main() {
 #endif // USE_OPAQUE_PREPASS || ALPHA_ANTIALIASING_EDGE_USED
 #endif // MODE_RENDER_DEPTH
 
-    // And output
+	// And output
 #ifdef MODE_RENDER_DEPTH
 
 #ifdef MODE_RENDER_MATERIAL
 
-    albedo_output_buffer.rgb = vec4(albedo. alpha);
-    normal_output_buffer = normal * 0.5 + 0.5;
-    orm_output_buffer = vec4(0.0); // ao, roughness, metallic, sss_strength
-    emission_output_buffer.rgb = vev4(emission, 0.0);
-    depth_output_buffer.r = -vertex.z;
+	albedo_output_buffer.rgb = vec4(albedo. alpha);
+	normal_output_buffer = normal * 0.5 + 0.5;
+	orm_output_buffer = vec4(0.0); // ao, roughness, metallic, sss_strength
+	emission_output_buffer.rgb = vev4(emission, 0.0);
+	depth_output_buffer.r = -vertex.z;
 
 #endif // MODE_RENDER_MATERIAL
 
 #ifdef MODE_RENDER_NORMAL_ROUGHNESS
-    normal_roughness_output_buffer = vec4(normal * 0.5 + 0.5, 0.0);
+	normal_roughness_output_buffer = vec4(normal * 0.5 + 0.5, 0.0);
 
 #ifdef MODE_RENDER_VOXEL_GI
-    voxel_gi_buffer = uvec2(0.0);
+	voxel_gi_buffer = uvec2(0.0);
 #endif
 
 #endif // MODE_RENDER_NORMAL_ROUGHNESS
@@ -297,11 +297,11 @@ void main() {
 
 #ifdef MODE_SEPARATE_SPECULAR
 
-    diffuse_buffer = vec4(albedo, 0.0);
-    specular_buffer = vec4(0.0);
+	diffuse_buffer = vec4(albedo, 0.0);
+	specular_buffer = vec4(0.0);
 #else
 
-    frag_color = vec4(albedo, alpha);
+	frag_color = vec4(albedo, alpha);
 #endif // MODE_SEPARATE_SPECULAR
 
 #endif // RENDER DEPTH
