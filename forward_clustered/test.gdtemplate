@@ -321,7 +321,7 @@ void main() {
 	albedo_output_buffer = vec4(albedo, alpha);
 	normal_output_buffer.rgb = normal * 0.5 + 0.5;
 	orm_output_buffer = vec4(0.0); // ao, roughness, metallic, sss_strength
-	emission_output_buffer.rgb = vec4(emission, 0.0);
+	emission_output_buffer = vec4(emission, 0.0);
 	depth_output_buffer.r = -vertex.z;
 
 #endif // MODE_RENDER_MATERIAL
