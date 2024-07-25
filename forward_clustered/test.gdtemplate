@@ -1,4 +1,3 @@
-// Minimal example Forward+ renderer custom shader template
 shader_type spatial;
 
 #[vertex]
@@ -231,6 +230,48 @@ void main() {
 #endif
 
 	float normal_map_depth = 1.0;
+
+	// Misc
+	vec2 screen_uv = gl_FragCoord.xy * scene_data.screen_pixel_size;
+
+#ifdef ALPHA_SCISSOR_USED
+	float alpha_scissor_threshold = 1.0;
+#endif // ALPHA_SCISSOR_USED
+
+#ifdef ALPHA_HASH_USED
+	float alpha_hash_scale = 1.0;
+#endif // ALPHA_HASH_USED
+
+#ifdef ALPHA_ANTIALIASING_EDGE_USED
+	float alpha_antialiasing_edge = 0.0;
+	vec2 alpha_texture_coordinate = vec2(0.0, 0.0);
+#endif // ALPHA_ANTIALIASING_EDGE_USED
+
+	// Define extra built-in variables that may be used by user shader,
+	// these should be optimised out even if used.
+
+	vec3 backlight = vec3(0.0);
+	vec4 transmittance_color = vec4(0.0, 0.0, 0.0, 1.0);
+	float transmittance_depth = 0.0;
+	float transmittance_boost = 0.0;
+	float metallic = 0.0;
+	float specular = 0.5;
+	float roughness = 1.0;
+	float rim = 0.0;
+	float rim_tint = 0.0;
+	float clearcoat = 0.0;
+	float clearcoat_roughness = 0.0;
+	float anisotropy = 0.0;
+	vec2 anisotropy_flow = vec2(1.0, 0.0);
+	vec4 fog = vec4(0.0);
+	vec4 custom_radiance = vec4(0.0);
+	vec4 custom_irradiance = vec4(0.0);
+	float ao = 1.0;
+	float ao_light_affect = 0.0;
+	vec2 uv2 = uv;
+	vec4 color = vec4(1.0);
+	float sss_strength = 0.0;
+	vec3 light_vertex = vertex;
 
 	// User fragment code
 	{

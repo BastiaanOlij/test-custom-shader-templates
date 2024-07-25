@@ -1,7 +1,8 @@
 [gd_scene load_steps=12 format=3 uid="uid://b44bcuru2t7dw"]
 
 [ext_resource type="Texture2D" uid="uid://b1waowk6l76ap" path="res://assets/images/pattern.png" id="1_falxy"]
-[ext_resource type="ShaderTemplate" path="res://test.gdtemplate" id="2_eml0t"]
+[ext_resource type="ShaderTemplate" path="res://forward_clustered/test.gdtemplate" id="2_eml0t"]
+[ext_resource type="Shader" path="res://forward_clustered/test.gdshader" id="3_l6vof"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_2nj7l"]
 sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
@@ -26,39 +27,17 @@ subdivide_width = 15
 subdivide_depth = 15
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_x030u"]
+shader_template = ExtResource("2_eml0t")
+shading_mode = 0
 albedo_color = Color(0.181894, 0.403872, 0.628806, 1)
 albedo_texture = ExtResource("1_falxy")
 uv1_scale = Vector3(3, 2, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_66f6a"]
 
-[sub_resource type="Shader" id="Shader_0ofo7"]
-code = "// NOTE: Shader automatically converted from Godot Engine 4.3.beta's StandardMaterial3D.
-
-shader_type spatial;
-shader_template \"res://test.gdtemplate\";
-render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_burley, specular_schlick_ggx;
-
-uniform vec4 albedo : source_color;
-uniform sampler2D texture_albedo : source_color, filter_linear_mipmap, repeat_enable;
-
-uniform vec3 uv1_scale;
-uniform vec3 uv1_offset;
-
-void vertex() {
-	UV = UV * uv1_scale.xy + uv1_offset.xy;
-}
-
-void fragment() {
-	vec4 albedo_tex = texture(texture_albedo, UV);
-	ALBEDO = albedo.rgb * albedo_tex.rgb;
-}
-"
-shader_template = ExtResource("2_eml0t")
-
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_15xma"]
 render_priority = 0
-shader = SubResource("Shader_0ofo7")
+shader = ExtResource("3_l6vof")
 shader_parameter/albedo = Color(0.181894, 0.403872, 0.628806, 1)
 shader_parameter/uv1_scale = Vector3(3, 2, 1)
 shader_parameter/uv1_offset = Vector3(0, 0, 0)
