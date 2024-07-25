@@ -219,7 +219,7 @@ If you do not wish to support one, just encompass it in an `ifdef`.
 In order to use the custom shader template you need to add the `shader_template` keyword in your shader like so:
 ```
 shader_type spatial;
-shader_template \"res://test.gdtemplate\";
+shader_template "res://test.gdtemplate";
 render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_burley, specular_schlick_ggx;
 
 ...
