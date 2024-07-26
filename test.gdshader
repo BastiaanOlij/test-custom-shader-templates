@@ -1,5 +1,5 @@
 shader_type spatial;
-shader_template "res://forward_clustered/test.gdtemplate";
+shader_template "res://test.gdtemplate";
 render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_burley, specular_schlick_ggx;
 
 uniform vec4 albedo : source_color;
