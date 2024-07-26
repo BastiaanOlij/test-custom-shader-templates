@@ -1,6 +1,6 @@
 shader_type spatial;
 
-#[forward-plus]
+#[forward_plus]
 
 #[vertex]
 
