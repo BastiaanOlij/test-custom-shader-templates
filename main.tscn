@@ -38,10 +38,10 @@ uv1_scale = Vector3(3, 2, 1)
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_xen7d"]
 render_priority = 0
 shader = ExtResource("3_aj1jd")
-shader_parameter/albedo = Color(0.137837, 0.62682, 0.739638, 1)
+shader_parameter/albedo = Color(0.580392, 0.627451, 0.741176, 1)
+shader_parameter/texture_albedo = ExtResource("1_falxy")
 shader_parameter/uv1_scale = Vector3(3, 2, 1)
 shader_parameter/uv1_offset = null
-shader_parameter/texture_albedo = ExtResource("1_falxy")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xui1m"]
 albedo_color = Color(0.181894, 0.403872, 0.628806, 1)
@@ -52,6 +52,7 @@ uv1_scale = Vector3(3, 2, 1)
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.803616, 0.515414, -0.297573, -1.39058e-08, 0.499998, 0.866027, 0.595149, -0.695953, 0.401807, 0, 3.04793, 0)
+light_energy = 0.1
 shadow_enabled = true
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
@@ -76,11 +77,10 @@ material_override = SubResource("ShaderMaterial_xen7d")
 mesh = SubResource("BoxMesh_66f6a")
 
 [node name="Cube03" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4842, 1.83141, 0.0188332)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.98016, 1.96266, 0.0188332)
 material_override = SubResource("StandardMaterial3D_xui1m")
 mesh = SubResource("BoxMesh_66f6a")
 
 [node name="OmniLight3D" type="OmniLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.494874, 1.63273, 0.371093)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.583753, 1.77012, 0.618345)
 light_color = Color(0.953471, 0.314779, 0.908152, 1)
-light_energy = 6.26
