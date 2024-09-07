@@ -1,8 +1,8 @@
-[gd_scene load_steps=12 format=3 uid="uid://b44bcuru2t7dw"]
+[gd_scene load_steps=13 format=3 uid="uid://b44bcuru2t7dw"]
 
 [ext_resource type="Texture2D" uid="uid://b1waowk6l76ap" path="res://assets/images/pattern.png" id="1_falxy"]
 [ext_resource type="ShaderTemplate" path="res://test.gdtemplate" id="2_eml0t"]
-[ext_resource type="Shader" path="res://test.gdshader" id="3_l6vof"]
+[ext_resource type="Shader" path="res://ldotn.gdshader" id="3_aj1jd"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_2nj7l"]
 sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
@@ -14,6 +14,7 @@ sky_material = SubResource("ProceduralSkyMaterial_2nj7l")
 [sub_resource type="Environment" id="Environment_ax5rq"]
 background_mode = 2
 sky = SubResource("Sky_1cj0o")
+ambient_light_color = Color(0.277528, 0.277528, 0.277528, 1)
 tonemap_mode = 2
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fmdho"]
@@ -34,18 +35,24 @@ uv1_scale = Vector3(3, 2, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_66f6a"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_15xma"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_xen7d"]
 render_priority = 0
-shader = ExtResource("3_l6vof")
-shader_parameter/albedo = Color(0.181894, 0.403872, 0.628806, 1)
-shader_parameter/uv1_scale = Vector3(3, 2, 1)
-shader_parameter/uv1_offset = Vector3(0, 0, 0)
+shader = ExtResource("3_aj1jd")
+shader_parameter/albedo = Color(0.580392, 0.627451, 0.741176, 1)
 shader_parameter/texture_albedo = ExtResource("1_falxy")
+shader_parameter/uv1_scale = Vector3(3, 2, 1)
+shader_parameter/uv1_offset = null
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xui1m"]
+albedo_color = Color(0.181894, 0.403872, 0.628806, 1)
+albedo_texture = ExtResource("1_falxy")
+uv1_scale = Vector3(3, 2, 1)
 
 [node name="Main" type="Node3D"]
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 0, 7, 0)
+transform = Transform3D(0.803616, 0.515414, -0.297573, -1.39058e-08, 0.499998, 0.866027, 0.595149, -0.695953, 0.401807, 0, 3.04793, 0)
+light_energy = 0.1
 shadow_enabled = true
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
@@ -53,17 +60,27 @@ environment = SubResource("Environment_ax5rq")
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(0.886632, -0.0741723, 0.45649, 0, 0.987055, 0.160381, -0.462476, -0.142199, 0.875154, 2.27761, 1.59337, 2.64574)
+cull_mask = 1047553
 
 [node name="Floor" type="MeshInstance3D" parent="."]
 material_override = SubResource("StandardMaterial3D_fmdho")
 mesh = SubResource("PlaneMesh_1f742")
 
 [node name="Cube01" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.806028, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.08116, 0.806028, 0)
 material_override = SubResource("StandardMaterial3D_x030u")
 mesh = SubResource("BoxMesh_66f6a")
 
 [node name="Cube02" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.52407, 0.806028, 0)
-material_override = SubResource("ShaderMaterial_15xma")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.442905, 0.806028, 0)
+material_override = SubResource("ShaderMaterial_xen7d")
 mesh = SubResource("BoxMesh_66f6a")
+
+[node name="Cube03" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.98016, 1.96266, 0.0188332)
+material_override = SubResource("StandardMaterial3D_xui1m")
+mesh = SubResource("BoxMesh_66f6a")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.583753, 1.77012, 0.618345)
+light_color = Color(0.953471, 0.314779, 0.908152, 1)
