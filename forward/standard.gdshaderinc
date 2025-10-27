@@ -1,4 +1,5 @@
 // Standard inputs, defines and helper functions for forward+ shaders
+// Godot 4.7 dev5
 
 /* half_inc.glsl */
 
@@ -241,6 +242,8 @@ float sc_luminance_multiplier() {
 	return 1.0;
 }
 
+layout(constant_id = 2) const bool sc_emulate_point_size = false;
+
 #define SDFGI_MAX_CASCADES 8
 
 /* Set 0: Base Pass (never changes) */
@@ -364,12 +367,17 @@ layout(set = 0, binding = 4, std430) restrict readonly buffer SpotLights {
 }
 spot_lights;
 
-layout(set = 0, binding = 5, std430) restrict readonly buffer ReflectionProbeData {
+layout(set = 0, binding = 5, std430) restrict readonly buffer AreaLights {
+	LightData data[];
+}
+area_lights;
+
+layout(set = 0, binding = 6, std430) restrict readonly buffer ReflectionProbeData {
 	ReflectionData data[];
 }
 reflections;
 
-layout(set = 0, binding = 6, std140) uniform DirectionalLights {
+layout(set = 0, binding = 7, std140) uniform DirectionalLights {
 	DirectionalLightData data[MAX_DIRECTIONAL_LIGHT_DATA_STRUCTS];
 }
 directional_lights;
@@ -389,7 +397,7 @@ struct Lightmap {
 	uint flags;
 };
 
-layout(set = 0, binding = 7, std140) restrict readonly buffer Lightmaps {
+layout(set = 0, binding = 8, std140) restrict readonly buffer Lightmaps {
 	Lightmap data[];
 }
 lightmaps;
@@ -398,20 +406,20 @@ struct LightmapCapture {
 	vec4 sh[9];
 };
 
-layout(set = 0, binding = 8, std140) restrict readonly buffer LightmapCaptures {
+layout(set = 0, binding = 9, std140) restrict readonly buffer LightmapCaptures {
 	LightmapCapture data[];
 }
 lightmap_captures;
 
-layout(set = 0, binding = 9) uniform texture2D decal_atlas;
-layout(set = 0, binding = 10) uniform texture2D decal_atlas_srgb;
+layout(set = 0, binding = 10) uniform texture2D decal_atlas;
+layout(set = 0, binding = 11) uniform texture2D decal_atlas_srgb;
 
-layout(set = 0, binding = 11, std430) restrict readonly buffer Decals {
+layout(set = 0, binding = 12, std430) restrict readonly buffer Decals {
 	DecalData data[];
 }
 decals;
 
-layout(set = 0, binding = 12, std430) restrict readonly buffer GlobalShaderUniformData {
+layout(set = 0, binding = 13, std430) restrict readonly buffer GlobalShaderUniformData {
 	vec4 data[];
 }
 global_shader_uniforms;
@@ -425,7 +433,7 @@ struct SDFVoxelGICascadeData {
 	float exposure_normalization;
 };
 
-layout(set = 0, binding = 13, std140) uniform SDFGI {
+layout(set = 0, binding = 14, std140) uniform SDFGI {
 	vec3 grid_size;
 	uint max_cascades;
 
@@ -453,11 +461,17 @@ layout(set = 0, binding = 13, std140) uniform SDFGI {
 }
 sdfgi;
 
-layout(set = 0, binding = 14) uniform sampler DEFAULT_SAMPLER_LINEAR_WITH_MIPMAPS_CLAMP;
+layout(set = 0, binding = 15) uniform sampler DEFAULT_SAMPLER_LINEAR_WITH_MIPMAPS_CLAMP;
 
-layout(set = 0, binding = 15) uniform texture2D best_fit_normal_texture;
+layout(set = 0, binding = 16) uniform texture2D best_fit_normal_texture;
 
-layout(set = 0, binding = 16) uniform texture2D dfg;
+layout(set = 0, binding = 17) uniform texture2D dfg;
+
+layout(set = 0, binding = 18) uniform sampler2D ltc_lut1;
+
+layout(set = 0, binding = 19) uniform sampler2D ltc_lut2;
+
+layout(set = 0, binding = 20) uniform texture2D area_light_atlas;
 
 /* Set 1: Render Pass (changes per render pass) */
 
@@ -622,8 +636,12 @@ layout(set = 1, binding = 33) uniform texture3D volumetric_fog_texture;
 
 #ifdef USE_MULTIVIEW
 layout(set = 1, binding = 34) uniform texture2DArray ssil_buffer;
+layout(set = 1, binding = 35) uniform texture2DArray ssr_buffer;
+layout(set = 1, binding = 36) uniform texture2DArray ssr_mip_level_buffer;
 #else
 layout(set = 1, binding = 34) uniform texture2D ssil_buffer;
+layout(set = 1, binding = 35) uniform texture2D ssr_buffer;
+layout(set = 1, binding = 36) uniform texture2D ssr_mip_level_buffer;
 #endif // USE_MULTIVIEW
 
 #endif

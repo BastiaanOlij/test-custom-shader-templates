@@ -1,5 +1,6 @@
 shader_type spatial;
-shader_template "res://ldotn.gdtemplate";
+// shader_template "res://mobile/ldotn.gdtemplate";
+shader_template "res://forward/ldotn.gdtemplate";
 render_mode blend_mix, depth_draw_opaque, cull_back;
 
 uniform vec4 albedo : source_color;

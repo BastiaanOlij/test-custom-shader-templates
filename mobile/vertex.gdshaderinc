@@ -1,4 +1,4 @@
-// Standard forward+ vertex shader input attributes.
+// Standard mobile vertex shader input attributes.
 // Godot 4.7 dev5
 
 /* INPUT ATTRIBS */
@@ -8,7 +8,7 @@ layout(location = 0) in vec4 vertex_angle_attrib;
 
 //only for pure render depth when normal is not used
 
-#if defined(NORMAL_USED) || defined(TANGENT_USED)
+#ifdef NORMAL_USED
 // Contains Normal/Axis in RG, can contain tangent in BA.
 layout(location = 1) in vec4 axis_tangent_attrib;
 #endif
@@ -25,7 +25,7 @@ layout(location = 4) in vec2 uv_attrib;
 
 #if defined(UV2_USED) || defined(USE_LIGHTMAP) || defined(MODE_RENDER_MATERIAL)
 layout(location = 5) in vec2 uv2_attrib;
-#endif
+#endif // MODE_RENDER_MATERIAL
 
 #if defined(CUSTOM0_USED)
 layout(location = 6) in vec4 custom0_attrib;
@@ -51,14 +51,14 @@ layout(location = 10) in uvec4 bone_attrib;
 layout(location = 11) in vec4 weight_attrib;
 #endif
 
-#ifdef MOTION_VECTORS
+#if defined(MODE_RENDER_MOTION_VECTORS)
 layout(location = 12) in vec4 previous_vertex_attrib;
 
 #if defined(NORMAL_USED) || defined(TANGENT_USED)
 layout(location = 13) in vec4 previous_normal_attrib;
 #endif
 
-#endif // MOTION_VECTORS
+#endif // MODE_RENDER_MOTION_VECTORS
 
 vec3 oct_to_vec3(vec2 e) {
 	vec3 v = vec3(e.xy, 1.0 - abs(e.x) - abs(e.y));
@@ -93,7 +93,7 @@ void _unpack_vertex_attributes(vec4 p_vertex_in, vec3 p_compressed_aabb_position
 	r_normal = oct_to_vec3(p_normal_in.xy * 2.0 - 1.0);
 #endif
 
-#if defined(NORMAL_USED) || defined(TANGENT_USED)
+#if defined(NORMAL_USED) || defined(TANGENT_USED) || defined(NORMAL_MAP_USED) || defined(BENT_NORMAL_MAP_USED) || defined(LIGHT_ANISOTROPY_USED)
 
 	float binormal_sign;
 

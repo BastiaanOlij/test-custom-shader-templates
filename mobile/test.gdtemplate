@@ -9,8 +9,8 @@ shader_type spatial;
 #define SHADER_IS_SRGB false
 #define SHADER_SPACE_FAR 0.0
 
-#include "forward/standard.gdshaderinc"
-#include "forward/vertex.gdshaderinc"
+#include "mobile/standard.gdshaderinc"
+#include "mobile/vertex.gdshaderinc"
 
 #GLOBALS
 
@@ -26,20 +26,12 @@ layout(location = 1) out vec3 normal_interp;
 layout(location = 2) out vec2 uv_interp;
 #endif
 
-#if defined(UV2_USED) || defined(USE_LIGHTMAP)
-layout(location = 3) out vec2 uv2_interp;
-#endif
-
 #ifdef TANGENT_USED
-layout(location = 4) out vec3 tangent_interp;
-layout(location = 5) out vec3 binormal_interp;
+layout(location = 3) out vec3 tangent_interp;
+layout(location = 4) out vec3 binormal_interp;
 #endif
 
-layout(location = 6) out flat uint instance_index_interp;
-
-#ifdef USE_MULTIVIEW
-layout(location = 7) out vec4 combined_projected;
-#endif
+layout(location = 5) out flat uint instance_index_interp;
 
 invariant gl_Position;
 
@@ -87,13 +79,11 @@ void main() {
 			scene_data.view_matrix[2],
 			vec4(0.0, 0.0, 0.0, 1.0)));
 
-
 	mat4 modelview = read_view_matrix * model_matrix;
 	mat3 modelview_normal = mat3(read_view_matrix) * model_normal_matrix;
 	vec2 read_viewport_size = scene_data.viewport_size;
 
 #ifdef USE_MULTIVIEW
-	mat4 combined_projection = scene_data.projection_matrix;
 	mat4 projection_matrix = scene_data.projection_matrix_view[ViewIndex];
 	mat4 inv_projection_matrix = scene_data.inv_projection_matrix_view[ViewIndex];
 	vec3 eye_offset = scene_data.eye_offset[ViewIndex].xyz;
@@ -167,10 +157,6 @@ void main() {
 	gl_Position = projection_matrix * vec4(vertex_interp, 1.0);
 #endif
 
-#ifdef USE_MULTIVIEW
-	combined_projected = combined_projection * vec4(vertex_interp, 1.0);
-#endif
-
 }
 
 #[fragment]
@@ -182,8 +168,8 @@ void main() {
 #define SHADER_IS_SRGB false
 #define SHADER_SPACE_FAR 0.0
 
-#include "forward/standard.gdshaderinc"
-#include "forward/fragment.gdshaderinc"
+#include "mobile/standard.gdshaderinc"
+#include "mobile/fragment.gdshaderinc"
 
 #GLOBALS
 
@@ -198,44 +184,12 @@ layout(location = 1) in vec3 normal_interp;
 layout(location = 2) in vec2 uv_interp;
 #endif
 
-#if defined(UV2_USED) || defined(USE_LIGHTMAP)
-layout(location = 3) in vec2 uv2_interp;
-#endif
-
 #ifdef TANGENT_USED
-layout(location = 4) in vec3 tangent_interp;
-layout(location = 5) in vec3 binormal_interp;
+layout(location = 3) in vec3 tangent_interp;
+layout(location = 4) in vec3 binormal_interp;
 #endif
 
-layout(location = 6) in flat uint instance_index_interp;
-
-#ifdef USE_MULTIVIEW
-layout(location = 7) in vec4 combined_projected;
-#endif
-
-void cluster_get_item_range(uint p_offset, out uint item_min, out uint item_max, out uint item_from, out uint item_to) {
-	uint item_min_max = cluster_buffer.data[p_offset];
-	item_min = item_min_max & 0xFFFFu;
-	item_max = item_min_max >> 16;
-
-	item_from = item_min >> 5;
-	item_to = (item_max == 0) ? 0 : ((item_max - 1) >> 5) + 1; //side effect of how it is stored, as item_max 0 means no elements
-}
-
-uint cluster_get_range_clip_mask(uint i, uint z_min, uint z_max) {
-	int local_min = clamp(int(z_min) - int(i) * 32, 0, 31);
-	int mask_width = min(int(z_max) - int(z_min), 32 - local_min);
-	return bitfieldInsert(uint(0), uint(0xFFFFFFFF), local_min, mask_width);
-}
-
-float get_omni_attenuation(float distance, float inv_range, float decay) {
-	float nd = distance * inv_range;
-	nd *= nd;
-	nd *= nd; // nd^4
-	nd = max(1.0 - nd, 0.0);
-	nd *= nd; // nd^2
-	return nd * pow(max(distance, 0.0001), -decay);
-}
+layout(location = 5) in flat uint instance_index_interp;
 
 #define global_time scene_data_block.data.time
 
@@ -252,10 +206,6 @@ void main() {
 #ifdef USE_MULTIVIEW
 	vec3 eye_offset = scene_data.eye_offset[ViewIndex].xyz;
 	vec3 view_highp = -normalize(vertex_interp - eye_offset);
-
-	// UV in our combined frustum space is used for certain screen uv processes where it's
-	// overkill to render separate left and right eye views
-	vec2 combined_uv = (combined_projected.xy / combined_projected.w) * 0.5 + 0.5;
 #else
 	vec3 eye_offset = vec3(0.0, 0.0, 0.0);
 	vec3 view_highp = -normalize(vertex_interp);
@@ -282,10 +232,6 @@ void main() {
 
 #ifdef UV_USED
 	vec2 uv = uv_interp;
-#endif
-
-#if defined(UV2_USED) || defined(USE_LIGHTMAP)
-	vec2 uv2 = uv2_interp;
 #endif
 
 	// Prepare our outputs
@@ -323,7 +269,7 @@ void main() {
 	vec4 transmittance_color = vec4(0.0, 0.0, 0.0, 1.0);
 	float transmittance_depth = 0.0;
 	float transmittance_boost = 0.0;
-	float metallic_highp = 0.0;
+	float metallmetallic_highpic = 0.0;
 	float specular = 0.5;
 	float roughness_highp = 1.0;
 	float rim = 0.0;
@@ -337,6 +283,7 @@ void main() {
 	vec4 custom_irradiance = vec4(0.0);
 	float ao = 1.0;
 	float ao_light_affect = 0.0;
+	vec2 uv2 = uv;
 	vec4 color = vec4(1.0);
 	float sss_strength = 0.0;
 	vec3 light_vertex = vertex;
@@ -347,14 +294,7 @@ void main() {
 	}
 
 	// Do lighting
-#ifndef MODE_RENDER_DEPTH
-
-	vec3 ambient_light = vec3(0.0);
-	vec3 diffuse_light = vec3(0.0);
-
-#ifdef MODE_UNSHADED
-	diffuse_light = albedo_highp;
-#else
+#if !defined(MODE_RENDER_DEPTH) && !defined(MODE_UNSHADED)
 
 #ifdef NORMAL_MAP_USED
 
@@ -363,121 +303,7 @@ void main() {
 
 	normal = normalize(mix(normal, tangent * normal_map.x + binormal * normal_map.y + normal * normal_map.z, normal_map_depth));
 
-#endif // NORMAL_MAP_USED
-
-	// Todo reflection cubemap (sky/probe reflections)
-
-#ifndef USE_LIGHTMAP
-	// Ambient 
-	if (bool(scene_data.flags & SCENE_DATA_FLAGS_USE_AMBIENT_LIGHT)) {
-		ambient_light = scene_data.ambient_light_color_energy.rgb;
-		if (bool(scene_data.flags & SCENE_DATA_FLAGS_USE_AMBIENT_CUBEMAP)) {
-			// TODO implement later
-		}
-	}
-#else // USE_LIGHTMAP
-	// TODO get ambient light from lightmap...
-
-#endif // USE_LIGHTMAP
-
-	// Finalize our ambient light
-#ifdef AMBIENT_LIGHT_DISABLED
-	ambient_light = vec3(0.0, 0.0, 0.0);
-#else
-	ambient_light *= albedo_highp.rgb;
-	ambient_light *= ao;
 #endif
-
-#ifdef USE_MULTIVIEW
-	uvec2 cluster_pos = uvec2(combined_uv.xy / scene_data.screen_pixel_size) >> implementation_data.cluster_shift;
-#else
-	uvec2 cluster_pos = uvec2(gl_FragCoord.xy) >> implementation_data.cluster_shift;
-#endif
-	uint cluster_offset = (implementation_data.cluster_width * cluster_pos.y + cluster_pos.x) * (implementation_data.max_cluster_element_count_div_32 + 32);
-
-	uint cluster_z = uint(clamp((-vertex.z / scene_data.z_far) * 32.0, 0.0, 31.0));
-
-	// if (!sc_disable_directional_lights) { //directional light <-- mobile renderer only
-	{ // Directional light.
-		for (uint i = 0; i < 8; i++) {
-			if (i >= scene_data.directional_light_count) {
-				break;
-			}
-
-			if (!bool(directional_lights.data[i].mask & instances.data[instance_index].layer_mask)) {
-				continue; //not masked
-			}
-
-			vec3 light_color = directional_lights.data[i].color;
-			float light_energy = directional_lights.data[i].energy;
-			vec3 light_direction = directional_lights.data[i].direction;
-			// light_direction = vec3(0.0, 1.0, 0.0);
-			// normal = vec3(0.0, 1.0, 0.0);
-			float LdotN = clamp(dot(light_direction, normal), 0.0, 1.0);
-
-			diffuse_light += albedo_highp * light_color * light_energy * LdotN;
-		}
-	}
-
-	// This code is for Forward + only !!!!
-	{ //omni lights
-
-		uint cluster_omni_offset = cluster_offset;
-
-		uint item_min;
-		uint item_max;
-		uint item_from;
-		uint item_to;
-
-		cluster_get_item_range(cluster_omni_offset + implementation_data.max_cluster_element_count_div_32 + cluster_z, item_min, item_max, item_from, item_to);
-
-#ifdef USE_SUBGROUPS
-		item_from = subgroupBroadcastFirst(subgroupMin(item_from));
-		item_to = subgroupBroadcastFirst(subgroupMax(item_to));
-#endif
-
-		for (uint i = item_from; i < item_to; i++) {
-			uint mask = cluster_buffer.data[cluster_omni_offset + i];
-			mask &= cluster_get_range_clip_mask(i, item_min, item_max);
-#ifdef USE_SUBGROUPS
-			uint merged_mask = subgroupBroadcastFirst(subgroupOr(mask));
-#else
-			uint merged_mask = mask;
-#endif
-
-			while (merged_mask != 0) {
-				uint bit = findMSB(merged_mask);
-				merged_mask &= ~(1u << bit);
-#ifdef USE_SUBGROUPS
-				if (((1u << bit) & mask) == 0) { //do not process if not originally here
-					continue;
-				}
-#endif
-				uint light_index = 32 * i + bit;
-
-				if (!bool(omni_lights.data[light_index].mask & instances.data[instance_index].layer_mask)) {
-					continue; //not masked
-				}
-
-				if (omni_lights.data[light_index].bake_mode == LIGHT_BAKE_STATIC && bool(instances.data[instance_index].flags & INSTANCE_FLAGS_USE_LIGHTMAP)) {
-					continue; // Statically baked light and object uses lightmap, skip
-				}
-
-				vec3 light_color = omni_lights.data[light_index].color;
-				vec3 light_delta = omni_lights.data[light_index].position - vertex;
-				float light_length = length(light_delta);
-				vec3 light_direction = vec3(0.0);
-				if (light_length > 0.0) {
-					light_direction = light_delta / light_length;
-				} 
-				float LdotN = clamp(dot(light_direction, normal), 0.0, 1.0);
-
-				float omni_attenuation = get_omni_attenuation(light_length, omni_lights.data[light_index].inv_radius, omni_lights.data[light_index].attenuation);
-
-				diffuse_light += albedo_highp * light_color * LdotN * omni_attenuation;
-			}
-		}
-	}
 
 	// No lighting code here (yet), but we do need to include user code
 #if false
@@ -486,8 +312,7 @@ void main() {
 	}
 #endif
 
-#endif // MODE_UNSHADED
-#endif // MODE_RENDER_DEPTH
+#endif // !defined(MODE_RENDER_DEPTH) && !defined(MODE_UNSHADED)
 
 #ifdef ALPHA_SCISSOR_USED
 	if (alpha < alpha_scissor_threshold) {
@@ -528,11 +353,11 @@ void main() {
 
 #ifdef MODE_SEPARATE_SPECULAR
 
-	diffuse_buffer = vec4(ambient_light + diffuse_light, 0.0);
+	diffuse_buffer = vec4(albedo_highp, 0.0);
 	specular_buffer = vec4(0.0);
 #else
 
-	frag_color = vec4(ambient_light + diffuse_light, alpha);
+	frag_color = vec4(albedo_highp, alpha);
 #endif // MODE_SEPARATE_SPECULAR
 
 #endif // RENDER DEPTH
