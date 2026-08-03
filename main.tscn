@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://b44bcuru2t7dw"]
+[gd_scene format=3 uid="uid://b44bcuru2t7dw"]
 
 [ext_resource type="Texture2D" uid="uid://b1waowk6l76ap" path="res://assets/images/pattern.png" id="1_falxy"]
 [ext_resource type="Shader" uid="uid://bt0xrvqv6lxk8" path="res://ldotn.gdshader" id="3_aj1jd"]
@@ -80,5 +80,5 @@ material_override = SubResource("StandardMaterial3D_xui1m")
 mesh = SubResource("BoxMesh_66f6a")
 
 [node name="OmniLight3D" type="OmniLight3D" parent="." unique_id=1852664225]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.583753, 1.77012, 0.618345)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.583753, 1.5833354, 0.95487297)
 light_color = Color(0.953471, 0.314779, 0.908152, 1)

@@ -341,14 +341,6 @@ void main() {
 
 #endif // MODE_RENDER_MATERIAL
 
-#ifdef MODE_RENDER_NORMAL_ROUGHNESS
-	normal_roughness_output_buffer = vec4(normal * 0.5 + 0.5, roughness_highp);
-
-#ifdef MODE_RENDER_VOXEL_GI
-	voxel_gi_buffer = uvec2(0.0);
-#endif
-
-#endif // MODE_RENDER_NORMAL_ROUGHNESS
 #else // RENDER DEPTH
 
 #ifdef MODE_SEPARATE_SPECULAR

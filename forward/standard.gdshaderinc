@@ -264,10 +264,15 @@ struct LightData { //this structure needs to be as packed as possible
 	vec3 color;
 	float attenuation;
 
-	float cone_attenuation;
-	float cone_angle;
+	mediump vec3 area_width;
+	float cone_attenuation; // area lights: 1 / (range + diagonal/2)
+
+	mediump vec3 area_height;
+	float cone_angle; // area lights: max mipmaps
+
 	float specular_amount;
 	float shadow_opacity;
+	float pad[2];
 
 	vec4 atlas_rect; // rect in the shadow atlas
 	mat4 shadow_matrix;
@@ -535,17 +540,17 @@ layout(set = 1, binding = 2, std430) buffer restrict readonly InstanceDataBuffer
 }
 instances;
 
-#ifdef USE_RADIANCE_CUBEMAP_ARRAY
+#ifdef USE_RADIANCE_OCTMAP_ARRAY
 
-layout(set = 1, binding = 3) uniform textureCubeArray radiance_cubemap;
+layout(set = 1, binding = 3) uniform texture2DArray radiance_cubemap;
 
 #else
 
-layout(set = 1, binding = 3) uniform textureCube radiance_cubemap;
+layout(set = 1, binding = 3) uniform texture2D radiance_cubemap;
 
 #endif
 
-layout(set = 1, binding = 4) uniform textureCubeArray reflection_atlas;
+layout(set = 1, binding = 4) uniform texture2DArray reflection_atlas;
 
 layout(set = 1, binding = 5) uniform texture2D shadow_atlas;
 
