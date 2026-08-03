@@ -1,7 +1,7 @@
 shader_type spatial;
-// shader_template "res://mobile/test.gdtemplate";
-shader_template "res://forward/test.gdtemplate";
-render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_burley, specular_schlick_ggx;
+// shader_template "res://mobile/ldotn.gdtemplate";
+shader_template "res://forward/ldotn.gdtemplate";
+render_mode blend_mix, depth_draw_opaque, cull_back;
 
 uniform vec4 albedo : source_color;
 uniform sampler2D texture_albedo : source_color, filter_linear_mipmap, repeat_enable;

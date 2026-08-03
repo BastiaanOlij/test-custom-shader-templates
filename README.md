@@ -3,7 +3,10 @@
 This is a simple sample project to test the new custom shader templates logic.
 Currently this showcases a Forward+ renderer custom shader template.
 
-Requires: https://github.com/godotengine/godot/pull/94427
+Requires: [PR#111939](https://github.com/godotengine/godot/pull/111939)
+
+Note, the below information is mostly outdated and still based on [PR#94427](https://github.com/godotengine/godot/pull/94427),
+see the `.gdtemplate` files for example code.
 
 ## Creating a custom shader template
 
